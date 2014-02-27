@@ -1,0 +1,212 @@
+# Program to draw a pong game
+# Author Kartikeya Menon
+# April 2013
+
+from cs1lib import *
+
+# Defining some constants relevant to all programming.
+
+WINDOW_HEIGHT = 600
+WINDOW_WIDTH = 600
+PADDLE_HEIGHT = 100
+PADDLE_WIDTH = 10
+BALL_RADIUS = 15
+BALL_VELOCITY = 3
+
+# Coordinates of the walls that are constant.
+
+WALL_TOP_Y = 0
+WALL_LEFT_X = 0
+WALL_BOTTOM_Y = WINDOW_HEIGHT
+WALL_RIGHT_X = WINDOW_WIDTH
+
+# Defining the sleep time as a constant at 1/50.
+
+NAP_TIME = 0.02
+
+# Setting the constant amount to move paddle as 10 pixels.
+
+MOVE_PADDLE = 10
+
+# Defining variables for controlling the left and right paddles.
+
+LEFT_UP = "a"
+LEFT_DOWN = "z"
+RIGHT_UP = "j"
+RIGHT_DOWN = "n"
+
+# Coordinates of beginning text (Press space to play).
+
+TEXT_X = WINDOW_HEIGHT / 2 - 150
+TEXT_Y = WINDOW_WIDTH / 2 - 100
+
+# Coordinates of control text.
+CONTROL_X = WINDOW_HEIGHT / 2 - 240
+CONTROL_Y = WINDOW_WIDTH / 2 + 100
+
+# Restarting text coordinates
+RESTART_X = WINDOW_HEIGHT / 2 - 150
+RESTART_Y = WINDOW_WIDTH / 2 - 76
+
+# Defining a function to draw the initial position of the paddles and the ball.
+
+def draw_paddles_ball():
+
+    # Making the rectangles, ball have no outline.
+    disable_stroke()
+    
+    enable_smoothing()
+    
+    # Drawing the rectangles in their starting place at the upper left 
+    # and lower right parts of the screen.
+    # Setting the color of the rectangles.
+    set_fill_color(0.22, 0.08, 0.69) # Blue
+    draw_rectangle(WALL_LEFT_X, WALL_TOP_Y, PADDLE_WIDTH, PADDLE_HEIGHT) # Left
+    draw_rectangle(WINDOW_WIDTH - PADDLE_WIDTH, WINDOW_HEIGHT - PADDLE_HEIGHT, PADDLE_WIDTH, PADDLE_HEIGHT) # Right
+   
+    
+    # Drawing the ball in its starting place in the center of the screen.
+    draw_circle(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, BALL_RADIUS)
+    
+# Everything in the draw_paddles_ball() function could be in main(), but just to keep the initial state and
+# the game play state distinct, I made two functions.    
+    
+# The main function where all of the bouncing mechanisms and the ball movement are defined.
+
+
+def main():
+    
+    # Defining state variables for the y-coordinates of the top-left point of the left and right paddles.
+    paddle_left_y = 0
+    
+    paddle_right_y = WINDOW_HEIGHT - PADDLE_HEIGHT
+    
+    ball_x = WINDOW_WIDTH / 2 # Initial x-coordinate of the ball
+    
+    
+    ball_y = WINDOW_HEIGHT / 2 # Initial y-coordinate of the ball
+    
+    # Creating state variable for velocity that can be updated (initial state is not moving).
+    y_velocity = 0
+    x_velocity = 0
+
+    # Now need a while loop and if statement ladder to move the paddles.
+    
+    while not window_closed():
+        
+        # Creating the starting screen for the game. 
+        if x_velocity == 0 and y_velocity == 0: 
+           
+            enable_stroke()
+            
+            # Drawing initial text.
+            set_stroke_color(1, 1, 1)
+            set_font_size(30)
+            draw_text("Press the space bar", TEXT_X, TEXT_Y)
+            
+            set_font_size(15)
+            draw_text("Controls: a, z control right paddle. j,n control left paddle. Press Q to quit.", \
+            CONTROL_X, CONTROL_Y)
+         
+        if x_velocity == 0 and y_velocity == 0 and (ball_x + BALL_RADIUS == WALL_RIGHT_X or \
+        ball_x - BALL_RADIUS == WALL_LEFT_X):
+            set_font_size(30)
+            draw_text("to restart", RESTART_X, RESTART_Y)
+            
+        disable_stroke()
+           
+        # Reassigning the velocities, so if the space bar is pressed the game starts.
+        
+        if is_key_pressed(" "):
+            ball_x = WINDOW_HEIGHT / 2 # state variable for x coordinate
+            ball_y = WINDOW_HEIGHT / 2 # state variable for y coordinate
+            x_velocity = 3
+            y_velocity = 3
+        
+        # Redrawing the initial paddles with state variables substituted.
+        
+        draw_rectangle(WINDOW_WIDTH - PADDLE_WIDTH, paddle_right_y, PADDLE_WIDTH, PADDLE_HEIGHT) # Bottom Right
+        
+        draw_rectangle(0, paddle_left_y, PADDLE_WIDTH, PADDLE_HEIGHT) # Top left
+        
+        draw_circle(ball_x, ball_y, BALL_RADIUS)
+    
+        # The second condition for the if statement ensures that the paddles won't go off screen.
+        # Making the paddles move when given keyboard input.
+        if is_key_pressed(RIGHT_UP) and paddle_right_y > 0:
+            
+            # Shifting the y-coordinate of the right side up by 10 pixels.
+            paddle_right_y = paddle_right_y - MOVE_PADDLE
+        
+        if is_key_pressed(RIGHT_DOWN) and paddle_right_y < WINDOW_HEIGHT - PADDLE_HEIGHT:
+        
+            # Shifting y-coordinate down by 10 pixels.
+            paddle_right_y = paddle_right_y + MOVE_PADDLE
+ 
+        if is_key_pressed(LEFT_UP) and paddle_left_y > 0:
+            
+            # Shifting the y-coordinate of the left side up by 10 pixels.
+            paddle_left_y = paddle_left_y - MOVE_PADDLE
+                
+        if is_key_pressed(LEFT_DOWN) and paddle_left_y < WINDOW_HEIGHT - PADDLE_HEIGHT:
+            
+            # Shifting the y-coordinate of left side down by 10 pixels.
+            paddle_left_y = paddle_left_y + MOVE_PADDLE
+          
+        # Creates initial downwards-left movement of the ball.
+        ball_x = ball_x - x_velocity
+        ball_y = ball_y + y_velocity
+
+        # Making ball bounce if ball hits a horizontal wall. Reverses y direction.
+        
+        if ball_y - BALL_RADIUS == WALL_TOP_Y or ball_y + BALL_RADIUS == WALL_BOTTOM_Y:
+            y_velocity = - y_velocity
+        
+        # Make ball stop when it hits a wall, and print the text "Game over" on a black background.
+        # Can comment out the draw_text function to see the ball stop when it hits a wall.
+        
+        if ball_x + BALL_RADIUS == WALL_RIGHT_X or ball_x - BALL_RADIUS == WALL_LEFT_X: 
+            x_velocity = 0
+            y_velocity = 0
+            
+        # Making the ball bounce if it hits either of the paddles.
+        
+        # The four "and" statements give the conditions for the intersection of the horizontal axis of the ball
+        # and the vertical surface of the paddle.
+        
+        # This is for the left paddle.
+        if PADDLE_WIDTH > ball_x - BALL_RADIUS and PADDLE_WIDTH < ball_x + BALL_RADIUS and \
+        ball_y < paddle_left_y + PADDLE_HEIGHT and ball_y > paddle_left_y:
+            x_velocity = - x_velocity # reversing the x component of the ball's movement.
+        
+        # The right paddle.
+        if WINDOW_WIDTH - PADDLE_WIDTH < ball_x + BALL_RADIUS and WINDOW_WIDTH - PADDLE_WIDTH > ball_x - BALL_RADIUS \
+        and ball_y < paddle_right_y + PADDLE_HEIGHT and ball_y > paddle_right_y:
+            x_velocity = - x_velocity
+            
+            
+        # Allowing user to quit.
+        
+        if is_key_pressed("Q"):
+            cs1_quit()
+        
+        
+        
+        request_redraw()
+        sleep(NAP_TIME)
+        
+        clear() # Clearing the old paddle's position. 
+           
+def game():
+    
+    # Setting background as yellow.
+    set_clear_color(1, .82, 0)
+    # Calling the two game functions.
+    draw_paddles_ball()
+    main()
+    
+
+    
+    
+# Starting game.    
+start_graphics(game, "Pong", WINDOW_HEIGHT, WINDOW_WIDTH)
